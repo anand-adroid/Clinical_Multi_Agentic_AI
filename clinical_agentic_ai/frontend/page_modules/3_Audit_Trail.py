@@ -305,10 +305,31 @@ with tab_overview:
         if crash:
             st.error(f"**Run failed.** {crash}")
         else:
-            st.error(
-                "Run failed. Inspect the Decisions or Advanced tabs for "
-                "the cause."
-            )
+            input_validations = [
+                v for v in (state_blob.get("validations") or [])
+                if not v.get("passed")
+                and v.get("rule_id", "").startswith(
+                    (
+                        "MISSING_COLUMNS",
+                        "PII_",
+                        "INT_COERCION_LOSS",
+                        "FLOAT_COERCION_LOSS",
+                        "DATE_COERCION_LOSS",
+                    )
+                )
+            ]
+            if input_validations:
+                st.error(
+                    "Run failed during input guardrails. "
+                    "Review the failed validation messages below."
+                )
+                for v in input_validations:
+                    st.markdown(f"- {v.get('message')}")
+            else:
+                st.error(
+                    "Run failed. Inspect the Decisions or Advanced tabs for "
+                    "the cause."
+                )
 
         # Most failures here are transient LLM overload / rate-limit
         # errors. The orchestrator checkpoints after every phase, so we

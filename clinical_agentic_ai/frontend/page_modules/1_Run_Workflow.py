@@ -233,9 +233,37 @@ def _live_run_panel() -> None:
 
     out = api_get(f"/runs/{last_run_id}/output")
     if out is None:
-        st.caption(
-            "No output table yet. The run may still be in progress or paused for review."
-        )
+        if info["status"] == "failed":
+            failed_step = events[-1].get("step") if events else None
+            if failed_step == "input_guard":
+                st.error(
+                    "Run failed during input guardrails. "
+                    "Open the Run workspace for the failed input validation details."
+                )
+                input_validations = [
+                    v for v in (state.get("validations") or [])
+                    if not v.get("passed")
+                    and v.get("rule_id", "").startswith(
+                        (
+                            "MISSING_COLUMNS",
+                            "PII_",
+                            "INT_COERCION_LOSS",
+                            "FLOAT_COERCION_LOSS",
+                            "DATE_COERCION_LOSS",
+                        )
+                    )
+                ]
+                for v in input_validations:
+                    st.markdown(f"- {v.get('message')}")
+            else:
+                st.error(
+                    "Run failed before output was generated. "
+                    "Open the Run workspace for the failure details."
+                )
+        else:
+            st.caption(
+                "No output table yet. The run may still be in progress or paused for review."
+            )
     else:
         st.subheader("Output preview")
         st.caption(
