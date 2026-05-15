@@ -1,0 +1,8 @@
+name,sources,type,allowed_values,rule,risk_class,max_null_rate
+AGE_GROUP,age,category,"<18|18-64|>=65",Bucket age into <18 18-64 >=65 (strict on both bounds).,routine,0.05
+TREATMENT_DURATION,"treatment_start_date,visit_date",int,,Days from treatment_start_date to visit_date. Null if either is missing or visit precedes treatment.,routine,0.20
+RESPONSE_FLAG,response,category,RESPONDER|NON_RESPONDER,CR or PR => RESPONDER. SD or PD => NON_RESPONDER. Otherwise null.,routine,0.10
+RISK_GROUP,"age,lab_value",category,LOW|MEDIUM|HIGH,"Score = (lab_value > 7.0 ? 2 : lab_value > 5.0 ? 1 : 0) + (age >= 65 ? 2 : age >= 50 ? 1 : 0). HIGH if score >= 3, MEDIUM if score >= 1, otherwise LOW.",critical,0.05
+COHORT_LABEL,"age,sex",category,,Group patients into demographic cohorts.,critical,0.10
+ANALYSIS_POP_FLAG,"age,TREATMENT_DURATION",category,Y|N,Y if age >= 18 AND TREATMENT_DURATION >= 1 day; otherwise N.,critical,0.0
+COMPOSITE_RISK_TIER,"RISK_GROUP,RESPONSE_FLAG,ANALYSIS_POP_FLAG",category,TIER_LOW|TIER_MEDIUM|TIER_HIGH,"If ANALYSIS_POP_FLAG != Y then TIER_LOW. Else if RISK_GROUP == HIGH then TIER_HIGH. Else if RISK_GROUP == MEDIUM then TIER_MEDIUM. Else TIER_LOW.",regulatory_critical,0.0

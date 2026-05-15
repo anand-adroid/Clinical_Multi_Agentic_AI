@@ -1,0 +1,121 @@
+name: "Phase II Type-2 Diabetes: derived endpoints"
+study: "DEMO-T2D-PH2"
+primary_key: patient_id
+
+source_schema:
+  patient_id: string
+  age: int
+  sex: string
+  treatment_start_date: date
+  visit_date: date
+  lab_value: float
+  response: string
+
+derivations:
+  - name: AGE_GROUP
+    sources: [age]
+    type: category
+    risk_class: routine
+    allowed_values: ["<18", "18-64", ">=65"]
+    rule: "Bucket age into <18, 18-64, >=65 (strict on both bounds)."
+    max_null_rate: 0.05
+    test_cases:
+      - {input: {age: 12},   expected: "<18"}
+      - {input: {age: 17},   expected: "<18"}
+      - {input: {age: 18},   expected: "18-64"}
+      - {input: {age: 64},   expected: "18-64"}
+      - {input: {age: 65},   expected: ">=65"}
+      - {input: {age: 80},   expected: ">=65"}
+      - {input: {age: null}, expected: null}
+
+  - name: TREATMENT_DURATION
+    sources: [treatment_start_date, visit_date]
+    type: int
+    risk_class: routine
+    rule: |
+      Days from treatment_start_date to visit_date. Return null if either
+      is missing, or if visit_date precedes treatment_start_date.
+    max_null_rate: 0.20
+    test_cases:
+      - {input: {treatment_start_date: "2024-01-04", visit_date: "2024-01-14"}, expected: 10}
+      - {input: {treatment_start_date: "2024-01-07", visit_date: "2024-01-07"}, expected: 0}
+      - {input: {treatment_start_date: "2024-02-01", visit_date: "2024-01-01"}, expected: null}
+      - {input: {treatment_start_date: null,         visit_date: "2024-01-01"}, expected: null}
+
+  - name: RESPONSE_FLAG
+    sources: [response]
+    type: category
+    risk_class: routine
+    allowed_values: ["RESPONDER", "NON_RESPONDER"]
+    rule: "CR or PR => RESPONDER. SD or PD => NON_RESPONDER. Otherwise null."
+    max_null_rate: 0.10
+    test_cases:
+      - {input: {response: "CR"}, expected: "RESPONDER"}
+      - {input: {response: "PR"}, expected: "RESPONDER"}
+      - {input: {response: "SD"}, expected: "NON_RESPONDER"}
+      - {input: {response: "PD"}, expected: "NON_RESPONDER"}
+      - {input: {response: "NE"}, expected: null}
+      - {input: {response: null}, expected: null}
+
+  - name: RISK_GROUP
+    sources: [age, lab_value]
+    type: category
+    risk_class: critical
+    allowed_values: ["LOW", "MEDIUM", "HIGH"]
+    rule: |
+      Score = (lab_value > 7.0 ? 2 : lab_value > 5.0 ? 1 : 0)
+            + (age >= 65 ? 2 : age >= 50 ? 1 : 0).
+      HIGH if score >= 3, MEDIUM if score >= 1, otherwise LOW.
+    max_null_rate: 0.05
+    test_cases:
+      - {input: {age: 70, lab_value: 8.0}, expected: "HIGH"}
+      - {input: {age: 55, lab_value: 6.0}, expected: "MEDIUM"}
+      - {input: {age: 30, lab_value: 4.0}, expected: "LOW"}
+      - {input: {age: 70, lab_value: 4.0}, expected: "MEDIUM"}
+      - {input: {age: 30, lab_value: 7.5}, expected: "MEDIUM"}
+
+  - name: COHORT_LABEL
+    sources: [age, sex]
+    type: category
+    risk_class: critical
+    rule: "Group patients into demographic cohorts."
+    max_null_rate: 0.10
+
+  - name: ANALYSIS_POP_FLAG
+    sources: [age, TREATMENT_DURATION]
+    type: category
+    risk_class: critical
+    allowed_values: ["Y", "N"]
+    rule: "Y if age >= 18 AND TREATMENT_DURATION >= 1 day; otherwise N."
+    max_null_rate: 0.0
+    test_cases:
+      - {input: {age: 25, TREATMENT_DURATION: 30},   expected: "Y"}
+      - {input: {age: 25, TREATMENT_DURATION: 0},    expected: "N"}
+      - {input: {age: 15, TREATMENT_DURATION: 30},   expected: "N"}
+      - {input: {age: 25, TREATMENT_DURATION: null}, expected: "N"}
+
+  - name: COMPOSITE_RISK_TIER
+    sources: [RISK_GROUP, RESPONSE_FLAG, ANALYSIS_POP_FLAG]
+    type: category
+    risk_class: regulatory_critical
+    allowed_values: ["TIER_LOW", "TIER_MEDIUM", "TIER_HIGH"]
+    rule: |
+      If ANALYSIS_POP_FLAG != 'Y' => TIER_LOW (not in analysis population).
+      Else if RISK_GROUP == 'HIGH' => TIER_HIGH.
+      Else if RISK_GROUP == 'MEDIUM' => TIER_MEDIUM.
+      Else => TIER_LOW.
+    max_null_rate: 0.0
+    test_cases:
+      - {input: {RISK_GROUP: "HIGH",   RESPONSE_FLAG: "RESPONDER",     ANALYSIS_POP_FLAG: "Y"}, expected: "TIER_HIGH"}
+      - {input: {RISK_GROUP: "MEDIUM", RESPONSE_FLAG: "NON_RESPONDER", ANALYSIS_POP_FLAG: "Y"}, expected: "TIER_MEDIUM"}
+      - {input: {RISK_GROUP: "LOW",    RESPONSE_FLAG: "RESPONDER",     ANALYSIS_POP_FLAG: "Y"}, expected: "TIER_LOW"}
+      - {input: {RISK_GROUP: "HIGH",   RESPONSE_FLAG: "RESPONDER",     ANALYSIS_POP_FLAG: "N"}, expected: "TIER_LOW"}
+
+invariants:
+  - id: TREATMENT_DURATION_NON_NEGATIVE
+    target: TREATMENT_DURATION
+    expr: "df['TREATMENT_DURATION'].isna() | (df['TREATMENT_DURATION'] >= 0)"
+
+  - id: RISK_GROUP_KNOWN
+    target: RISK_GROUP
+    expr: "df['RISK_GROUP'].isin(['LOW','MEDIUM','HIGH']) | df['RISK_GROUP'].isna()"

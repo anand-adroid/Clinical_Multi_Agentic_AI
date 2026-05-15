@@ -1,0 +1,108 @@
+# ---------------------------------------------------------------------------
+# .gitignore — what stays out of the repo so the public clone is clean and
+# production-shaped. Anything that is generated at runtime, holds secrets,
+# is editor-specific, or is personal interview prep stays out.
+# ---------------------------------------------------------------------------
+
+# --- Secrets and local config ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+.streamlit/secrets.toml
+.aws/
+.gcloud/
+gcloud-key.json
+service-account.json
+
+# --- Python build / cache / virtual envs ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# --- Test artefacts ---
+.pytest_cache/
+pytest-cache-files-*/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.ruff_cache/
+
+# --- Runtime state produced by the orchestrator ---
+storage/agentic.db
+storage/agentic.db-journal
+storage/agentic.db-wal
+storage/agentic.db-shm
+storage/checkpoints/
+storage/runs/
+storage/logs/
+storage/memory/
+
+# --- Local notebooks and scratch ---
+*.ipynb_checkpoints/
+notebooks/scratch/
+*.swp
+*.swo
+
+# --- Personal / interview-prep material (not for the public repo) ---
+# Anything inside personal/ stays local. Put your demo notes, screenshots,
+# practice scripts, or anything else that is not part of the deliverable here.
+personal/
+docs/DEMO_SCRIPT.md
+docs/SETUP_LOCAL.md
+docs/*.draft.md
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+*.code-workspace
+.cursor/
+.claude/
+*.iml
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- Docker / build outputs ---
+*.tar
+*.tar.gz
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Frontend caches ---
+frontend/.streamlit/secrets.toml
+
+# --- Data: sample inputs are tracked; user uploads and outputs are not ---
+data/uploads/
+data/outputs/
+data/cache/
+
+# --- GitHub Actions CI/CD ---
+# A working pytest CI workflow on push is a strong engineering signal for
+# a reviewer and zero impact on the pipeline at runtime. Recommend
+# keeping it tracked. Uncomment the next line if you want a leaner repo
+# without CI.
+# .github/
+
+# --- Stray pytest temp artefacts that occasionally land at repo root ---
+pytest-cache-files-*/

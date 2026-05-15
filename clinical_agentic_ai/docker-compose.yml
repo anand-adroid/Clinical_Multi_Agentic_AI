@@ -1,0 +1,36 @@
+version: "3.9"
+
+# Production-style two-service deployment.
+# Frontend (Streamlit) and backend (FastAPI) are decoupled and scale independently.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    image: clinical-agentic-backend:latest
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/app/storage
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    image: clinical-agentic-frontend:latest
+    env_file: .env
+    environment:
+      API_BASE_URL: http://backend:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      backend:
+        condition: service_healthy

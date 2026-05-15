@@ -1,0 +1,58 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate sample data
+        run: python scripts/generate_sample_data.py
+
+      - name: Run pytest
+        env:
+          DB_URL: "sqlite:///./test.db"
+          ANTHROPIC_API_KEY: ""    # offline path on CI; tests stub the LLM
+          LOG_JSON: "false"
+        run: pytest -q --tb=short
+
+      - name: Lint (syntax-only sanity)
+        run: |
+          python -m py_compile $(git ls-files '*.py')
+
+  docker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -f docker/backend.Dockerfile -t clinical-agentic-backend:ci .
+      - name: Build frontend image
+        run: docker build -f docker/frontend.Dockerfile -t clinical-agentic-frontend:ci .

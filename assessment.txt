@@ -1,0 +1,279 @@
+Candidate Assignment
+One-Week Take-Home Project
+Agentic AI Workflow for Clinical Data Derivation, Verification, and Traceability
+________________________________________
+1. Role Context
+This assignment is part of the interview process for AI/ML Lead and Senior Scientist roles within Sanofi Digital R&D.
+It is designed to evaluate your ability to design and build practical, production-oriented AI systems in a regulated healthcare environment, with a focus on agentic AI systems.
+We are particularly interested in how you approach:
+•	agentic system architecture
+•	data transformation and reasoning
+•	verification and reliability
+•	human-in-the-loop workflows
+•	traceability and auditability
+•	and production readiness
+________________________________________
+2. Role Alignment (Important)
+All candidates complete the same assignment. Expectations differ by level:
+Senior Scientist
+We expect:
+•	strong technical implementation
+•	clear agent/workflow design
+•	solid handling of data logic and validation
+•	ability to build a working prototype
+________________________________________
+AI/ML Lead
+In addition to the above, we expect:
+•	deeper system architecture thinking
+•	clear trade-offs and design decisions
+•	ability to generalize to platform-level systems
+•	strong perspective on:
+o	reliability
+o	governance
+o	regulatory constraints
+o	long-term evolution
+________________________________________
+3. Background
+Clinical data workflows require transforming structured datasets into analysis-ready outputs that support reporting, regulatory submission, and decision-making.
+These workflows must balance:
+•	automation
+•	correctness
+•	auditability
+•	and human oversight
+In this assignment, you will design and implement a simplified agentic AI system that reflects these constraints.
+________________________________________
+4. Assignment Objective
+Design and implement a prototype system that:
+Input:
+•	a structured dataset (mock clinical data)
+•	a simplified transformation specification
+Output:
+•	derived analysis-ready dataset or outputs
+•	verification results
+•	and a traceable audit trail
+Your system should demonstrate a multi-step agentic workflow, not a single script or simple LLM wrapper.
+________________________________________
+5. Core Requirements
+A. Multi-Agent Workflow Design
+Your system should include clearly defined components (agents or modules), such as:
+•	Specification Review
+o	interpret transformation rules
+o	identify ambiguity or missing logic
+•	Transformation / Code Generation
+o	generate derivation logic or transformations
+•	Verification / Validation
+o	check correctness and consistency
+•	Refinement / Debugging
+o	support iterative correction
+•	Audit / Summarization
+o	provide explanation and traceability
+You may implement agents explicitly or as modular components. The architecture should be clear and well justified.
+________________________________________
+B. Dependency-Aware Derivation
+Your system must handle dependencies between variables:
+•	distinguish source vs derived variables
+•	ensure correct execution order
+•	avoid incorrect transformations
+A DAG or equivalent approach is strongly encouraged.
+________________________________________
+C. Human-in-the-Loop (HITL)
+Include at least one human review step:
+•	reviewing or editing generated logic
+•	approving outputs
+•	resolving validation issues
+You should also demonstrate:
+•	how feedback is captured
+•	how it affects subsequent processing
+________________________________________
+D. Traceability and Auditability
+Your system must allow reconstruction of results.
+At minimum, provide:
+•	source-to-output lineage
+•	applied transformation logic
+•	agent/module responsible
+•	human interventions
+•	final output state
+________________________________________
+E. Memory and Reusability
+Design both:
+Short-Term Memory
+•	workflow state
+•	intermediate outputs
+Long-Term Memory
+•	reusable logic
+•	human feedback
+•	validated patterns
+Explain:
+•	what is stored
+•	how it is retrieved
+•	how it improves performance
+________________________________________
+6. Suggested Input Scope
+Keep the scope manageable.
+Example dataset fields:
+•	patient_id
+•	age
+•	sex
+•	treatment_start_date
+•	visit_date
+•	lab_value
+•	response
+Example derived outputs:
+•	AGE_GROUP
+•	TREATMENT_DURATION
+•	RESPONSE_FLAG
+•	ANALYSIS_POP_FLAG
+•	RISK_GROUP
+You may define your own dataset and specification.
+________________________________________
+7. Technical Expectations
+You may use:
+•	Python or R
+•	Streamlit / FastAPI / CLI / notebook
+•	LLMs, rules, or hybrid approaches
+Focus on:
+•	system design quality
+•	reasoning
+•	working prototype
+________________________________________
+8. Deliverables
+1. Source Code
+•	GitHub repository or equivalent
+•	with setup instructions
+________________________________________
+2. Working Prototype
+•	runnable system
+________________________________________
+3. Design Document (2–4 pages)
+Include:
+•	system architecture
+•	agent/module roles
+•	orchestration logic
+•	dependency handling
+•	HITL design
+•	traceability
+•	memory design
+•	trade-offs
+________________________________________
+4. Presentation (15–20 minutes)
+Cover:
+•	problem framing
+•	solution overview
+•	demo
+•	design decisions
+•	limitations
+________________________________________
+9. Evaluation Criteria
+Submissions will be evaluated across the following dimensions:
+1. Agentic Architecture
+•	clarity of system decomposition (agents/modules and responsibilities)
+•	quality of orchestration design (workflow, control flow, interaction between components)
+•	appropriateness of design choices for the problem context
+________________________________________
+2. Data Logic & Dependency Handling
+•	correctness of transformation logic
+•	explicit handling of dependencies (e.g., ordering, DAG or equivalent reasoning)
+•	robustness to edge cases or incomplete specifications
+________________________________________
+3. Verification & Reliability
+•	strength and coverage of validation mechanisms
+•	ability to detect inconsistencies, errors, or missing logic
+•	evidence of a reliability mindset (not just happy-path execution)
+________________________________________
+4. Human-in-the-Loop Design
+•	appropriateness of where human intervention is introduced
+•	usability and clarity of review/approval mechanisms
+•	effective integration of human feedback into the workflow
+________________________________________
+5. Traceability & Auditability
+•	ability to trace outputs back to source data and transformation logic
+•	clarity and completeness of audit trail (lineage, steps, decisions)
+•	support for reproducibility and explainability
+________________________________________
+6. Memory & Reusability
+•	clarity of short-term vs long-term memory design
+•	usefulness of stored knowledge (e.g., reusable rules, feedback)
+•	evidence that the design can improve efficiency, consistency, or accuracy over time
+________________________________________
+7. Implementation Quality
+•	code structure, modularity, and readability
+•	completeness and functionality of the prototype
+•	ease of running and understanding the system
+________________________________________
+8. Communication & Reasoning
+•	clarity of written and verbal explanations
+•	ability to articulate assumptions, trade-offs, and limitations
+•	overall coherence of the solution and design rationale
+________________________________________
+10. Optional: Cloud & Production Design
+(Recommended for Lead candidates)
+Describe how your system would operate in production.
+A. Deployment Architecture
+•	cloud (AWS/Azure/GCP)
+•	containerization
+•	service separation
+B. Data Security
+•	VPC / private environment
+•	encryption
+•	access control
+•	no raw data exposure
+C. Model Integration
+•	LLM gateway
+•	model selection
+•	prompt handling
+D. Workflow Orchestration
+•	orchestration strategy
+•	failure handling
+E. Audit & Traceability
+•	audit logs
+•	lineage storage
+•	versioning
+F. Scalability
+•	parallel processing
+•	performance optimization
+G. CI/CD
+•	pipelines
+•	testing
+•	rollback
+H. Observability
+•	logging
+•	monitoring
+•	metrics
+________________________________________
+11. Additional Expectations for AI/ML Lead Candidates
+A. Platform Thinking
+•	how this scales across studies
+B. Trade-Offs
+•	automation vs control
+•	LLM vs rules
+•	flexibility vs compliance
+C. Reliability
+•	failure modes
+•	error propagation
+D. Scaling Use Cases
+•	multi-study
+•	multi-modal
+E. Enterprise Integration
+•	existing platforms
+•	validated tools
+•	infrastructure constraints
+________________________________________
+12. What We Are Looking For
+We are not expecting a full production system.
+We are looking for candidates who can:
+•	structure complex workflows
+•	make sound design decisions
+•	build working systems
+•	reason about real-world constraints
+•	communicate clearly
+________________________________________
+13. Timeline
+Please complete within one week.
+________________________________________
+14. Submission Instructions
+Submit:
+•	code repository
+•	design document
+•	presentation materials
+•	run instructions
+
