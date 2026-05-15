@@ -21,7 +21,7 @@ page_header(
     "generator for consistency across studies.",
 )
 
-patterns = api_get("/memory/patterns", default=[]) or []
+patterns = api_get("/memory/patterns", timeout=5.0, default=[]) or []
 if not patterns:
     st.info("No patterns stored yet. Complete a run to populate the library.")
     st.stop()

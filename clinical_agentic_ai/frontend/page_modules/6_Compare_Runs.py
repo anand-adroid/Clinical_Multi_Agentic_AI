@@ -22,7 +22,7 @@ page_header(
 )
 
 
-runs = api_get("/runs", default=[]) or []
+runs = api_get("/runs", timeout=5.0, default=[]) or []
 if len(runs) < 2:
     st.info("At least two runs are required for comparison.")
     st.stop()

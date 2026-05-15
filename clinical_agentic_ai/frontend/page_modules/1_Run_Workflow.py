@@ -174,13 +174,13 @@ def _live_run_panel() -> None:
     a run is in flight so the user sees progress without manually
     refreshing. Stops re-running once the run reaches a terminal or
     HITL-pause state — there's nothing else to update at that point."""
-    info = api_get(f"/runs/{last_run_id}")
+    info = api_get(f"/runs/{last_run_id}", timeout=5.0)
     if not info:
         st.warning(f"Run `{last_run_id}` not found.")
         return
 
-    state = api_get(f"/runs/{last_run_id}/state", default={}) or {}
-    events = api_get(f"/runs/{last_run_id}/events", default=[]) or []
+    state = api_get(f"/runs/{last_run_id}/state", timeout=5.0, default={}) or {}
+    events = api_get(f"/runs/{last_run_id}/events", timeout=5.0, default=[]) or []
 
     st.subheader("Latest run")
     hdr_l, hdr_r = st.columns([3, 1])
@@ -208,7 +208,7 @@ def _live_run_panel() -> None:
             type="primary",
             key="goto_reviews",
         ):
-            st.switch_page("pages/3_Audit_Trail.py")
+            st.switch_page("page_modules/3_Audit_Trail.py")
 
     if is_admin() and state.get("topo_order"):
         st.markdown(
@@ -220,7 +220,7 @@ def _live_run_panel() -> None:
         )
 
     if is_admin():
-        dot_payload = api_get(f"/runs/{last_run_id}/dag.dot", default=None)
+        dot_payload = api_get(f"/runs/{last_run_id}/dag.dot", timeout=5.0, default=None)
         if dot_payload and dot_payload.get("dot"):
             with st.expander("Dependency graph (admin)", expanded=False):
                 st.graphviz_chart(dot_payload["dot"], use_container_width=True)
@@ -254,20 +254,20 @@ def _live_run_panel() -> None:
                 use_container_width=True,
                 key="goto_run_detail",
             ):
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
             if nav_r.button(
                 "Score against golden",
                 use_container_width=True,
                 key="goto_eval",
             ):
-                st.switch_page("pages/5_Evaluation.py")
+                st.switch_page("page_modules/5_Evaluation.py")
         else:
             if st.button(
                 "Open Run detail",
                 use_container_width=False,
                 key="goto_run_detail",
             ):
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
 
 
 _live_run_panel()

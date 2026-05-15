@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from components import needs_review_runs, status_toast_watcher
+from components import api_get, needs_review_runs, status_toast_watcher
 from components.auth import is_admin, role_switcher
 
 
@@ -85,9 +85,16 @@ logo_path = _find_logo()
 # without the cache, every page render and every polling fragment kicks
 # off an extra HTTP GET against /runs, which makes the whole UI feel
 # sluggish.
+#
+# Use short 1-second timeout so this doesn't block sidebar rendering if
+# backend is slow to start. The badge updates every 5 seconds via fragment
+# anyway, so a brief stale value is acceptable for UX.
 @st.cache_data(ttl=5)
 def _cached_pending_count() -> int:
-    return len(needs_review_runs())
+    try:
+        return len(api_get("/runs", timeout=1.0, default=[]) or [])
+    except Exception:
+        return 0
 
 
 _pending_count = _cached_pending_count()
@@ -97,19 +104,19 @@ _inbox_title = (
 
 # Primary surfaces — everyone sees these.
 primary_pages = [
-    st.Page("pages/0_Dashboard.py", title="Runs", default=True),
-    st.Page("pages/1_Run_Workflow.py", title="New run"),
-    st.Page("pages/2_HITL_Review.py", title=_inbox_title),
-    st.Page("pages/3_Audit_Trail.py", title="Run workspace"),
+    st.Page("page_modules/0_Dashboard.py", title="Runs", default=True),
+    st.Page("page_modules/1_Run_Workflow.py", title="New run"),
+    st.Page("page_modules/2_HITL_Review.py", title=_inbox_title),
+    st.Page("page_modules/3_Audit_Trail.py", title="Run workspace"),
 ]
 
 # Admin / observability — gated by role. In production the same check
 # happens server-side on every admin route.
 admin_pages = [
-    st.Page("pages/7_HITL_Quality.py", title="Quality metrics"),
-    st.Page("pages/4_Memory.py", title="Pattern library"),
-    st.Page("pages/5_Evaluation.py", title="Evaluation"),
-    st.Page("pages/6_Compare_Runs.py", title="Run comparison"),
+    st.Page("page_modules/7_HITL_Quality.py", title="Quality metrics"),
+    st.Page("page_modules/4_Memory.py", title="Pattern library"),
+    st.Page("page_modules/5_Evaluation.py", title="Evaluation"),
+    st.Page("page_modules/6_Compare_Runs.py", title="Run comparison"),
 ]
 
 if is_admin():

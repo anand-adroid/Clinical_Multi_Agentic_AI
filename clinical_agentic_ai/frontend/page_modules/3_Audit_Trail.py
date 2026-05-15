@@ -54,7 +54,7 @@ def _poll_status() -> None:
     """Rerun the page whenever this run's status changes — so the inline
     HITL form, processing spinner, or completion view appears within ~2s
     of the backend transition."""
-    info_now = api_get(f"/runs/{selected}")
+    info_now = api_get(f"/runs/{selected}", timeout=5.0)
     if not info_now:
         return
     key = f"_run_detail_last_status_{selected}"
@@ -67,8 +67,8 @@ def _poll_status() -> None:
 
 _poll_status()
 
-info = api_get(f"/runs/{selected}") or {}
-state_blob = api_get(f"/runs/{selected}/state", default={}) or {}
+info = api_get(f"/runs/{selected}", timeout=5.0) or {}
+state_blob = api_get(f"/runs/{selected}/state", timeout=5.0, default={}) or {}
 status = info.get("status", "")
 pill_text, pill_color = human_status(status)
 
@@ -142,7 +142,7 @@ _active = _active_slot.container()
 # Fetch the live pending payload alongside status. The form is gated on
 # BOTH ``needs_user_action(status)`` and ``pending.get("pending")`` — either
 # missing means "nothing to act on right now."
-_pending_now = api_get(f"/runs/{selected}/hitl/pending", default={}) or {}
+_pending_now = api_get(f"/runs/{selected}/hitl/pending", timeout=5.0, default={}) or {}
 _has_active_form = (
     needs_user_action(status) and bool(_pending_now.get("pending"))
 )
@@ -252,7 +252,7 @@ with _active:
         # text changes per-derivation as the orchestrator advances.
         @st.fragment(run_every=1.5)
         def _live_progress() -> None:
-            fresh = api_get(f"/runs/{selected}/state", default={}) or {}
+            fresh = api_get(f"/runs/{selected}/state", timeout=5.0, default={}) or {}
             line = _running_indicator(fresh)
             st.markdown(
                 "<div style='background:#EFF6FF;border-left:4px solid #1D4ED8;"
@@ -409,12 +409,8 @@ with tab_overview:
                 "Score vs golden (admin)",
                 key="cd_view_eval",
             ):
-                st.switch_page("pages/5_Evaluation.py")
-
-
-# ---------------------------------------------------------------------- Output
-with tab_output:
-    out_resp = api_get(f"/runs/{selected}/output")
+                st.switch_page("page_modules/5_Evaluation.py")
+    out_resp = api_get(f"/runs/{selected}/output", timeout=10.0)
     if not out_resp:
         st.info(
             "No output yet — the run has not reached the execution phase."
@@ -540,7 +536,7 @@ with tab_decisions:
 
 # ---------------------------------------------------------------------- Lineage
 with tab_lineage:
-    report = api_get(f"/runs/{selected}/audit/report")
+    report = api_get(f"/runs/{selected}/audit/report", timeout=10.0)
     lineage_items: list[dict] = []
     if report and report.get("lineage"):
         lineage_items = list(report.get("lineage") or [])
@@ -706,7 +702,7 @@ with tab_advanced:
         "Engineering detail: dependency graph, agent timeline, hash chain."
     )
     if is_admin():
-        dot = api_get(f"/runs/{selected}/dag.dot")
+        dot = api_get(f"/runs/{selected}/dag.dot", timeout=10.0)
         if dot and dot.get("dot"):
             with st.expander("Dependency graph (admin)", expanded=False):
                 st.graphviz_chart(dot["dot"], use_container_width=True)
@@ -729,7 +725,7 @@ with tab_advanced:
             pd.DataFrame(rows),
             use_container_width=True, hide_index=True,
         )
-    events = api_get(f"/runs/{selected}/events", default=[]) or []
+    events = api_get(f"/runs/{selected}/events", timeout=10.0, default=[]) or []
     with st.expander("Agent event timeline", expanded=False):
         if events:
             ev = pd.DataFrame(events)
@@ -742,7 +738,7 @@ with tab_advanced:
                 ev[keep], use_container_width=True, hide_index=True,
                 height=320,
             )
-    audit_rows = api_get(f"/runs/{selected}/audit", default=[]) or []
+    audit_rows = api_get(f"/runs/{selected}/audit", timeout=10.0, default=[]) or []
     with st.expander("Audit ledger", expanded=False):
         if audit_rows:
             st.dataframe(

@@ -70,7 +70,7 @@ if queue:
                     key=f"open_{rid}",
                 ):
                     remember_run(rid)
-                    st.switch_page("pages/3_Audit_Trail.py")
+                    st.switch_page("page_modules/3_Audit_Trail.py")
 else:
     st.success("No runs are waiting on a decision.")
 
@@ -96,7 +96,7 @@ remember_run(selected)
 
 @st.fragment(run_every=2)
 def _poll_status() -> None:
-    info_now = api_get(f"/runs/{selected}")
+    info_now = api_get(f"/runs/{selected}", timeout=5.0)
     if not info_now:
         return
     cur = info_now.get("status", "")
@@ -109,9 +109,9 @@ def _poll_status() -> None:
 
 _poll_status()
 
-info = api_get(f"/runs/{selected}") or {}
-state_blob = api_get(f"/runs/{selected}/state", default={}) or {}
-history = api_get(f"/runs/{selected}/hitl/history", default=[]) or []
+info = api_get(f"/runs/{selected}", timeout=5.0) or {}
+state_blob = api_get(f"/runs/{selected}/state", timeout=5.0, default={}) or {}
+history = api_get(f"/runs/{selected}/hitl/history", timeout=5.0, default=[]) or []
 
 label, color = human_status(info.get("status", ""))
 st.markdown(status_badge(label, color), unsafe_allow_html=True)
@@ -148,7 +148,7 @@ if not rendered:
             type="primary",
             key="watch_run_detail",
         ):
-            st.switch_page("pages/3_Audit_Trail.py")
+            st.switch_page("page_modules/3_Audit_Trail.py")
     elif current_status.startswith("completed"):
         st.success(
             "Run completed. Open the **Run Workspace** to inspect output "
@@ -159,14 +159,14 @@ if not rendered:
             type="primary",
             key="goto_completed_detail",
         ):
-            st.switch_page("pages/3_Audit_Trail.py")
+            st.switch_page("page_modules/3_Audit_Trail.py")
     elif current_status == "failed":
         st.error("Run failed. Open the Run Workspace for the cause.")
         if st.button(
             "Open Run Workspace",
             key="goto_failed_detail",
         ):
-            st.switch_page("pages/3_Audit_Trail.py")
+            st.switch_page("page_modules/3_Audit_Trail.py")
     else:
         st.info("This run is not waiting on a reviewer.")
 

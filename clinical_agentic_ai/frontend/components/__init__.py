@@ -22,8 +22,9 @@ API: str = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
 
 def needs_review_runs() -> list[dict[str, Any]]:
     """Return every run currently waiting on human input. Cheap query —
-    safe to call from a polling fragment on every page."""
-    runs = api_get("/runs", default=[]) or []
+    safe to call from a polling fragment on every page.
+    Uses a short timeout so a slow/starting backend doesn't block page load."""
+    runs = api_get("/runs", timeout=4.0, default=[]) or []
     return [r for r in runs if str(r.get("status", "")).startswith("awaiting_hitl_")]
 
 
@@ -105,7 +106,7 @@ def global_review_banner() -> None:
                 # Open the workspace directly: the active HITL form is
                 # rendered inline there, so the reviewer can act without an
                 # extra page switch.
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
 
     _render()
 
@@ -299,13 +300,13 @@ def current_run(default_to_first: bool = True) -> str | None:
         return rid
     if not default_to_first:
         return None
-    runs = api_get("/runs", default=[]) or []
+    runs = api_get("/runs", timeout=4.0, default=[]) or []
     return runs[0]["id"] if runs else None
 
 
 def run_picker(*, label: str = "Run", key: str = "run_picker") -> str | None:
     """Render a run-selector pre-populated with the latest run."""
-    runs = api_get("/runs", default=[]) or []
+    runs = api_get("/runs", timeout=4.0, default=[]) or []
     if not runs:
         st.info("No runs yet. Start one from the **New Run** page.")
         return None
@@ -317,5 +318,9 @@ def run_picker(*, label: str = "Run", key: str = "run_picker") -> str | None:
     return selected
 
 
+@st.cache_data(ttl=5)
 def health_summary() -> dict[str, Any] | None:
-    return api_get("/health", timeout=5, default=None)
+    """Get backend health status. Cached for 5 seconds to avoid repeated
+    calls on every page load. Uses a longer timeout since the backend may
+    be slow on startup."""
+    return api_get("/health", timeout=4, default=None)

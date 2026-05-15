@@ -102,27 +102,34 @@ page_header(
 # the banner when there is a real problem. The /health endpoint returns
 # {"status":"ok","version":"...","llm_enabled":bool} on success or None
 # when unreachable.
-health = health_summary()
-if not health or health.get("status") != "ok":
-    st.error(
-        "Backend unreachable at the configured API URL. "
-        "Confirm the backend is running on the expected port "
-        "(default `http://localhost:8000`), or set `API_BASE_URL` in `.env`."
-    )
-elif not health.get("llm_enabled"):
-    st.warning(
-        "LLM is not configured. Runs will pause at code generation and "
-        "require manual code entry through the Reviews page. Add "
-        "`ANTHROPIC_API_KEY` to `.env` to enable AI-driven code generation."
-    )
+# Use a fragment for health check so a slow/unavailable backend doesn't
+# block the page from showing the runs list and CTA.
+@st.fragment(run_every=10)
+def _show_health_banner() -> None:
+    health = health_summary()
+    if not health or health.get("status") != "ok":
+        st.error(
+            "Backend unreachable at the configured API URL. "
+            "Confirm the backend is running on the expected port "
+            "(default `http://localhost:8000`), or set `API_BASE_URL` in `.env`."
+        )
+    elif not health.get("llm_enabled"):
+        st.warning(
+            "LLM is not configured. Runs will pause at code generation and "
+            "require manual code entry through the Reviews page. Add "
+            "`ANTHROPIC_API_KEY` to `.env` to enable AI-driven code generation."
+        )
+
+_show_health_banner()
 
 # Primary CTA in the top-right corner where the eye lands first.
 strip_l, strip_r = st.columns([5, 1])
 with strip_r:
     if st.button("New run", type="primary", use_container_width=True):
-        st.switch_page("pages/1_Run_Workflow.py")
+        st.switch_page("page_modules/1_Run_Workflow.py")
 
-runs = api_get("/runs", default=[]) or []
+# Use short 5-second timeout so page doesn't hang if backend is slow.
+runs = api_get("/runs", timeout=5.0, default=[]) or []
 my_email = current_email()
 
 
@@ -158,7 +165,7 @@ if not runs:
                 use_container_width=True,
                 key="hero_new_run",
             ):
-                st.switch_page("pages/1_Run_Workflow.py")
+                st.switch_page("page_modules/1_Run_Workflow.py")
         st.markdown(
             "<div style='text-align:center;margin-top:20px;color:#64748B;"
             "font-size:0.85em;'>or pick a sample dataset from the "
@@ -251,7 +258,8 @@ def _runs_list() -> None:
     30-second polling when everything is terminal so the page stays
     responsive but doesn't hammer the backend."""
     # Re-fetch on every tick — keeps the list aligned with the backend.
-    fresh = api_get("/runs", default=[]) or []
+    # Use short 5-second timeout so polling doesn't block the page.
+    fresh = api_get("/runs", timeout=5.0, default=[]) or []
     rendered = [r for r in fresh if _matches_filter(r)]
     for run in rendered:
         rid = run.get("id", "")
@@ -261,7 +269,10 @@ def _runs_list() -> None:
         relative = _relative_time(run.get("updated_at") or run.get("created_at"))
         submitter = run.get("user_id") or "anonymous"
 
-        state_blob = api_get(f"/runs/{rid}/state", default={}) or {}
+        # Use short 5-second timeout for state fetch so individual run cards
+        # don't block if backend is slow. Missing state just means stepper
+        # won't show detailed phase info, but the run card still renders.
+        state_blob = api_get(f"/runs/{rid}/state", timeout=5.0, default={}) or {}
 
         # Augment the status pill with the current phase when a run is
         # actively running. Reviewers want to know "where in the pipeline"
@@ -304,11 +315,11 @@ def _action_buttons(rid: str, status: str, run: dict) -> None:
                 remember_run(rid)
                 # Workspace renders the active HITL form inline, so the
                 # reviewer can act in the same place they inspect output.
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
         with action_m:
             if st.button("Open", key=f"open_{rid}", use_container_width=True):
                 remember_run(rid)
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
     elif _is_resumable(run):
         with action_l:
             if st.button("Resume", key=f"resume_{rid}", type="primary",
@@ -320,13 +331,13 @@ def _action_buttons(rid: str, status: str, run: dict) -> None:
         with action_m:
             if st.button("Open", key=f"open_{rid}", use_container_width=True):
                 remember_run(rid)
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
     else:
         with action_l:
             if st.button("Open", key=f"open_{rid}", type="primary",
                          use_container_width=True):
                 remember_run(rid)
-                st.switch_page("pages/3_Audit_Trail.py")
+                st.switch_page("page_modules/3_Audit_Trail.py")
 
 
 _runs_list()

@@ -28,7 +28,7 @@ page_header(
 )
 
 
-runs = api_get("/runs", default=[]) or []
+runs = api_get("/runs", timeout=5.0, default=[]) or []
 runs = [r for r in runs if str(r.get("status", "")).startswith("completed")]
 if not runs:
     st.info("No completed runs to evaluate. Finish a run first.")
