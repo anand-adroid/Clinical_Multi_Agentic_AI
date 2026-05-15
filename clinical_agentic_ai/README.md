@@ -1,7 +1,6 @@
 # Clinical Agentic AI
 
 > Multi-agent system for clinical data derivation, verification, and traceability.
-> Sanofi Digital R&D — AI/ML Lead candidate assignment.
 
 A regulated-pharma-shaped pipeline that takes a clinical dataset plus a derivation
 specification and drives the work through a chain of cooperating agents — producing
@@ -82,7 +81,7 @@ programmers see the raw code editor.
 
 - **Source code** — this repository.
 - **Working prototype** — restart the two services above; open the Streamlit UI.
-- **Design document** — `docs/design_document.md` (architecture, trade-offs, production
+- **Design document** — `docs/design_document.docx` (architecture, trade-offs, production
   roadmap).
 - **Tests** — `pytest tests/` runs the 32-test suite end-to-end including a full
   pipeline run against a stubbed LLM.
@@ -129,6 +128,7 @@ Every tunable lives in `.env` (see `.env.example`):
 
 - `ANTHROPIC_API_KEY` — enable the LLM-backed code generator; without it the
   pipeline pauses at code generation and escalates to a manual-entry HITL gate.
+- `OPENAI_API_KEY` - seemless Fallback to openAI LLM when there is an outage to Anthropic
 - `REQUIRE_CODE_PREAPPROVAL` — when `true`, pause for every derivation rather than
   only those flagged by the Planner.
 - `MIN_CONFIDENCE_THRESHOLD` — derivations whose self-reported LLM confidence falls
