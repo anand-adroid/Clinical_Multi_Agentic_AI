@@ -190,8 +190,6 @@ Remove-Item storage\agentic.db,storage\memory,storage\checkpoints,storage\runs -
 **A reviewer says they cannot see the Admin pages:** that's by design. Set
 `USER_ROLES=admin` in `.env` or switch the role in the sidebar (dev mode only).
 
----
 
-## Licence
 
-Internal evaluation artefact for the Sanofi Digital R&D AI/ML Lead interview.
+
